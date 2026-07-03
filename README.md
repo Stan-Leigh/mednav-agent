@@ -99,10 +99,12 @@ graph TD
 3. **Error: `Pydantic ValidationError` at startup**
    - *Fix:* Ensure no duplicate edges exist in `app/agent.py`. Converging routes must use a single unconditional edge to the target node.
 
-## Video demo
-[![Watch the video](assets/frontend_playground.png)](https://youtu.be/OQ38U1or8wg)
-
 ## Assets
 
 - **Agent Workflow Diagram**
   ![Workflow Diagram](assets/architecture_diagram.png)
+- **Project Banner:**
+  ![Cover Banner](assets/cover_page_banner.png)
+
+## Video demo
+[![Watch the video](assets/frontend_playground.png)](https://youtu.be/OQ38U1or8wg)
