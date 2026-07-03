@@ -99,39 +99,6 @@ graph TD
 3. **Error: `Pydantic ValidationError` at startup**
    - *Fix:* Ensure no duplicate edges exist in `app/agent.py`. Converging routes must use a single unconditional edge to the target node.
 
-## Push to GitHub
-
-1. Create a new repo at https://github.com/new
-   - Name: mednav-agent
-   - Visibility: Public or Private
-   - Do NOT initialize with README (you already have one)
-
-2. In your terminal, navigate into your project folder:
-   ```bash
-   cd mednav-agent
-   git init
-   git add .
-   git commit -m "Initial commit: mednav-agent ADK agent"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/mednav-agent.git
-   git push -u origin main
-   ```
-
-3. Verify `.gitignore` includes:
-   ```
-   .env          # your API key — must NEVER be pushed
-   .venv/
-   __pycache__/
-   *.pyc
-   .adk/
-   ```
-
-⚠️ NEVER push `.env` to GitHub. Your API key will be exposed publicly.
-
-## Demo Script
-
-The spoken presentation script is located at [DEMO_SCRIPT.txt](DEMO_SCRIPT.txt).
-
 ## Assets
 
 - **Agent Workflow Diagram:**
