@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedNav Agent Custom Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-panel: rgba(30, 41, 59, 0.7);
+      --bg-chat-user: #2563eb;
+      --bg-chat-agent: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font-sans: 'Inter', sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-glow {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #60a5fa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .session-badge {
+      background-color: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }
+
+    .btn-reset {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: #fca5a5;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset:hover {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: rgba(244, 63, 94, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Layout */
+    .container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Chat Section */
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      background-color: var(--bg-secondary);
+      position: relative;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 75%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .message.user {
+      align-self: flex-end;
+    }
+
+    .message.agent {
+      align-self: flex-start;
+    }
+
+    .message-bubble {
+      padding: 0.95rem 1.25rem;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+    }
+
+    .message.user .message-bubble {
+      background-color: var(--bg-chat-user);
+      color: var(--text-main);
+      border-bottom-right-radius: 2px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+
+    .message.agent .message-bubble {
+      background-color: var(--bg-chat-agent);
+      color: var(--text-main);
+      border-bottom-left-radius: 2px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .message.user .message-meta {
+      text-align: right;
+    }
+
+    /* Inline review interrupt card */
+    .review-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15), 0 0 20px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-self: center;
+      width: 90%;
+      max-width: 600px;
+      margin: 1rem 0;
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-amber);
+      font-weight: 600;
+      font-family: var(--font-display);
+      font-size: 1rem;
+    }
+
+    .review-body {
+      color: var(--text-main);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      white-space: pre-wrap;
+    }
+
+    .review-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+    }
+
+    .btn-approve {
+      background-color: var(--accent-emerald);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-reject {
+      background-color: var(--accent-rose);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-approve:hover, .btn-reject:hover {
+      opacity: 0.9;
+    }
+
+    /* Thinking indicator */
+    .thinking {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .dot-pulse {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--text-muted);
+      border-radius: 50%;
+      animation: pulse-dot 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Input area */
+    .input-container {
+      padding: 1.5rem 2rem;
+      background-color: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 1rem;
+    }
+
+    .chat-input {
+      flex: 1;
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0.8rem 1.2rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .chat-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-send {
+      background-color: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-send:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-send:disabled {
+      background-color: var(--bg-chat-agent);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Right Logs Section */
+    .logs-section {
+      width: 38%;
+      max-width: 500px;
+      min-width: 300px;
+      background-color: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .logs-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-secondary);
+    }
+
+    .logs-title {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logs-title::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-purple);
+    }
+
+    .btn-clear {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      color: var(--text-main);
+    }
+
+    .logs-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background-color: #05070c;
+    }
+
+    .log-item {
+      padding: 0.5rem;
+      border-radius: 4px;
+      border-left: 2px solid #475569;
+      background-color: rgba(30, 41, 59, 0.2);
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    .log-item.info {
+      border-left-color: var(--accent-blue);
+      color: #93c5fd;
+    }
+
+    .log-item.security-pass {
+      border-left-color: var(--accent-emerald);
+      background-color: rgba(16, 185, 129, 0.05);
+      color: #a7f3d0;
+    }
+
+    .log-item.security-fail {
+      border-left-color: var(--accent-rose);
+      background-color: rgba(244, 63, 94, 0.05);
+      color: #fecaca;
+    }
+
+    .log-item.warning {
+      border-left-color: var(--accent-amber);
+      color: #fde68a;
+    }
+
+    .log-item.tool {
+      border-left-color: var(--accent-purple);
+      color: #ddd6fe;
+    }
+
+    .log-item.orchestrator {
+      border-left-color: var(--accent-blue);
+      color: #e2e8f0;
+    }
+
+    /* Keyframes */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(0.6); opacity: 0.2; }
+      50% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        flex-direction: column;
+      }
+      .logs-section {
+        width: 100%;
+        height: 300px;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo-glow"></div>
+      <h1>MedNav Custom Playground</h1>
+    </div>
+    <div class="status-container">
+      <span class="session-badge" id="session-display">Session: None</span>
+      <button class="btn-reset" onclick="resetSession()">Reset Session</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Chat Section -->
+    <div class="chat-section">
+      <div class="messages-container" id="messages">
+        <!-- Messages will be dynamically rendered here -->
+        <div class="message agent">
+          <div class="message-bubble">Hello! I am the MedNav Agent. I can help simplify complex medical terms or search for clinical trials in layperson language. How can I assist you today?</div>
+          <div class="message-meta">MedNav Agent</div>
+        </div>
+      </div>
+
+      <!-- Input Form -->
+      <div class="input-container">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Type a message..." onkeydown="handleKeydown(event)">
+        <button class="btn-send" id="btn-send" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <!-- Logs / Traces Panel -->
+    <div class="logs-section">
+      <div class="logs-header">
+        <div class="logs-title">System Audit & Tool Logs</div>
+        <button class="btn-clear" onclick="clearLogs()">Clear</button>
+      </div>
+      <div class="logs-body" id="logs-container">
+        <!-- Trace logs will populate here -->
+        <div class="log-item info">System ready. Waiting for user input...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sessionId = "";
+    let isWaitingForResponse = false;
+
+    // Auto-create a session on load
+    window.addEventListener("load", () => {
+      resetSession();
+    });
+
+    async function resetSession() {
+      try {
+        const res = await fetch("/apps/app/users/test_user/sessions", {
+          method: "POST"
+        });
+        const data = await res.json();
+        sessionId = data.id;
+        document.getElementById("session-display").innerText = `Session: ${sessionId.substring(0, 8)}...`;
+        
+        // Reset UI
+        document.getElementById("messages").innerHTML = `
+          <div class="message agent">
+            <div class="message-bubble">Hello! I am the MedNav Agent. I can help simplify complex medical terms or search for clinical trials in layperson language. How can I assist you today?</div>
+            <div class="message-meta">MedNav Agent</div>
+          </div>
+        `;
+        clearLogs();
+        log("info", `New session initialized: ${sessionId}`);
+      } catch (err) {
+        log("warning", `Error creating session: ${err.message}`);
+      }
+    }
+
+    function clearLogs() {
+      document.getElementById("logs-container").innerHTML = '<div class="log-item info">Logs cleared.</div>';
+    }
+
+    function log(type, message, extra = null) {
+      const logs = document.getElementById("logs-container");
+      const logDiv = document.createElement("div");
+      logDiv.className = `log-item ${type}`;
+      
+      let text = `[${new Date().toLocaleTimeString()}] ${message}`;
+      if (extra) {
+        text += `\n${JSON.stringify(extra, null, 2)}`;
+      }
+      logDiv.innerText = text;
+      logs.appendChild(logDiv);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function handleKeydown(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function appendMessage(sender, text, role) {
+      const container = document.getElementById("messages");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `message ${role}`;
+      msgDiv.innerHTML = `
+        <div class="message-bubble">${escapeHtml(text)}</div>
+        <div class="message-meta">${sender}</div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+      return msgDiv;
+    }
+
+    function showThinking() {
+      const container = document.getElementById("messages");
+      const thinkDiv = document.createElement("div");
+      thinkDiv.className = "thinking";
+      thinkDiv.id = "thinking-indicator";
+      thinkDiv.innerHTML = `
+        <span>MedNav Workflow is running</span>
+        <div class="dot-pulse">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      `;
+      container.appendChild(thinkDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeThinking() {
+      const indicator = document.getElementById("thinking-indicator");
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    function setInputsDisabled(disabled) {
+      document.getElementById("chat-input").disabled = disabled;
+      document.getElementById("btn-send").disabled = disabled;
+    }
+
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function sendMessage() {
+      const inputEl = document.getElementById("chat-input");
+      const text = inputEl.value.trim();
+      if (!text || isWaitingForResponse) return;
+
+      inputEl.value = "";
+      appendMessage("User", text, "user");
+      isWaitingForResponse = true;
+      setInputsDisabled(true);
+      showThinking();
+
+      const payload = {
+        appName: "app",
+        userId: "test_user",
+        sessionId: sessionId,
+        newMessage: {
+          role: "user",
+          parts: [{ text: text }]
+        }
+      };
+
+      await streamQuery(payload);
+    }
+
+    async function streamQuery(payload) {
+      try {
+        log("info", "Starting agent workflow execution via /run_sse", payload);
+        const res = await fetch("/run_sse", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP Error ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          
+          // Process all lines except the last one (which might be incomplete)
+          for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith("data: ")) {
+              const jsonStr = line.substring(6);
+              try {
+                const event = JSON.parse(jsonStr);
+                handleAgentEvent(event);
+              } catch (e) {
+                console.error("Failed to parse SSE event JSON", e);
+              }
+            }
+          }
+          buffer = lines[lines.length - 1];
+        }
+      } catch (err) {
+        log("warning", `Workflow error: ${err.message}`);
+        removeThinking();
+        appendMessage("System", `An error occurred: ${err.message}`, "agent");
+        isWaitingForResponse = false;
+        setInputsDisabled(false);
+      }
+    }
+
+    function handleAgentEvent(event) {
+      const author = event.author || "system";
+      
+      // Log event
+      if (event.actions && event.actions.route === "security_failed") {
+        log("security-fail", `Security Redirection: ${event.output}`);
+      } else if (event.nodeInfo && event.nodeInfo.path && event.nodeInfo.path.includes("security_checkpoint")) {
+        // Did we scrub something?
+        if (event.actions && event.actions.stateDelta && event.actions.stateDelta.cleaned_query) {
+          if (event.actions.stateDelta.cleaned_query !== event.output) {
+            log("warning", `Security Redaction Applied: ${event.actions.stateDelta.cleaned_query}`);
+          } else {
+            log("security-pass", "Security check passed successfully.");
+          }
+        }
+      }
+
+      // Check tool calls inside model content
+      if (event.content && event.content.parts) {
+        event.content.parts.forEach(part => {
+          if (part.functionCall) {
+            const fc = part.functionCall;
+            if (fc.name === "adk_request_input" && fc.id === "approve_guide") {
+              // Pause thinking and show human review dialog
+              removeThinking();
+              log("warning", "Execution interrupted. Waiting for Human Review approval.");
+              showReviewPrompt(fc.args.message, fc.id);
+              return;
+            } else {
+              // Tool call from agent to MCP server
+              log("tool", `Agent [${author}] calls tool: ${fc.name}`, fc.args);
+            }
+          }
+          if (part.functionResponse) {
+            const fr = part.functionResponse;
+            log("tool", `Tool [${fr.name}] returned output:`, fr.response);
+          }
+          if (part.text && event.nodeInfo && event.nodeInfo.messageAsOutput) {
+            // Render actual response message from Orchestrator
+            removeThinking();
+            appendMessage("MedNav Agent", part.text, "agent");
+            isWaitingForResponse = false;
+            setInputsDisabled(false);
+          }
+        });
+      }
+
+      // If checkpoint failed, render block message
+      if (event.actions && event.actions.route === "security_failed") {
+        removeThinking();
+        appendMessage("MedNav Jargon Redirection", event.output, "agent");
+        isWaitingForResponse = false;
+        setInputsDisabled(false);
+      }
+    }
+
+    function showReviewPrompt(message, interruptId) {
+      const container = document.getElementById("messages");
+      
+      // Extract the guide text before the review prompt instructions if possible
+      let explanation = message;
+      if (message.includes("--- REVIEW REQ ---")) {
+        explanation = message.split("Do you approve presenting this guide to the patient?")[0];
+        explanation = explanation.replace("--- REVIEW REQ ---", "").replace("Generated medical explanation:", "").trim();
+      }
+
+      const reviewDiv = document.createElement("div");
+      reviewDiv.className = "review-card";
+      reviewDiv.id = "active-review-card";
+      reviewDiv.innerHTML = `
+        <div class="review-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Clinical Review Gate (Human-in-the-Loop)
+        </div>
+        <div class="review-body">${escapeHtml(explanation)}</div>
+        <div class="review-actions">
+          <button class="btn-reject" onclick="submitReview('no', '${interruptId}')">Reject</button>
+          <button class="btn-approve" onclick="submitReview('yes', '${interruptId}')">Approve & Send</button>
+        </div>
+      `;
+      container.appendChild(reviewDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function submitReview(decision, interruptId) {
+      // Remove review card
+      const card = document.getElementById("active-review-card");
+      if (card) card.remove();
+
+      // Show thinking and log action
+      showThinking();
+      log("info", `Submitting Human Review decision: "${decision}"`);
+
+      // Resume payload
+      const payload = {
+        appName: "app",
+        userId: "test_user",
+        sessionId: sessionId,
+        newMessage: {
+          role: "user",
+          parts: [{
+            functionResponse: {
+              name: "adk_request_input",
+              id: interruptId,
+              response: {
+                approve_guide: decision
+              }
+            }
+          }]
+        }
+      };
+
+      await streamQuery(payload);
+    }
+  </script>
+</body>
+</html>
